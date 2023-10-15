@@ -1,0 +1,11 @@
+
+# System
+.DS_Store
+
+# File editor
+Session.vim
+*.swp
+
+# Zig system
+zig-cache
+zig-out
