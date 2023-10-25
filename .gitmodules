@@ -1,3 +1,0 @@
-[submodule "Sources/libdwm"]
-	path = Sources/libdwm
-	url = git@github.com:QSmally/libdwm.git
