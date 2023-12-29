@@ -1,0 +1,24 @@
+
+version: "3"
+
+services:
+  kiosk:
+    build: KWM/
+    image: kiosk
+    container_name: kiosk
+    restart: always
+    privileged: true
+    group_add:
+      - video
+    devices:
+      - "/dev/dri"
+    volumes:
+      - "xserver:/tmp/.X11-unix"
+      - "./xinitrc:/root/.xinitrc"
+    environment:
+      - "DISPLAY=:0"
+      - "UDEV=on"
+    command: startx -- $DISPLAY -nocursor
+
+volumes:
+  xserver:
