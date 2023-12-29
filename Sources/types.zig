@@ -4,13 +4,16 @@ const std = @import("std");
 
 pub const Application = struct {
 
+    const Self = @This();
+
     class: ?[]const u8 = null,
     instance: ?[]const u8 = null,
     title: ?[]const u8 = null,
     floating: bool = false,
+
     important: bool = false,
 
-    pub fn rule(self: @This(), tag: u5) dwm.Rule {
+    pub fn rule(self: *const Self, tag: u5) dwm.Rule {
         return .{
             .class = @ptrCast(self.class),
             .instance = @ptrCast(self.instance),
@@ -23,6 +26,8 @@ pub const Application = struct {
 
 pub const Layout = struct {
 
+    const Self = @This();
+
     tag: u5 = 0,
     fallback: bool = false,
     applications: []const Application,
@@ -34,23 +39,13 @@ pub const Layout = struct {
             .applications = layout.applications };
     }
 
-    pub fn rules(self: @This(), allocator: std.mem.Allocator) ![]dwm.Rule {
-        var dwm_rules = std.ArrayList(dwm.Rule).init(allocator);
+    pub fn rules(self: *const Self, alloc: std.mem.Allocator) ![]dwm.Rule {
+        var dwm_rules = RuleList.init(alloc);
         for (self.applications) |application|
             try dwm_rules.append(application.rule(self.tag));
-        return dwm_rules.toOwnedSlice();
+        return try dwm_rules.toOwnedSlice();
     }
 };
 
 pub const RuleList = std.ArrayList(dwm.Rule);
 pub const LayoutList = std.StringArrayHashMap(Layout);
-
-pub fn rules(allocator: std.mem.Allocator, layouts: LayoutList) ![]dwm.Rule {
-    var rules_list = RuleList.init(allocator);
-
-    for (layouts.values()) |layout| {
-        const layout_rules = try layout.rules(allocator);
-        try rules_list.appendSlice(layout_rules);
-    }
-    return try rules_list.toOwnedSlice();
-}

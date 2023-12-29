@@ -1,6 +1,6 @@
 
 const dwm = @cImport(@cInclude("dwm.h"));
-const config = @import("type_config.zig");
+const types = @import("types.zig");
 const std = @import("std");
 
 // pub fn file(allocator: std.mem.Allocator, filename: []const u8) !config.LayoutList {
@@ -10,11 +10,21 @@ const std = @import("std");
 //     return config.LayoutList.jsonParse(allocator, content.reader(), .{});
 // }
 
-pub fn mock(allocator: std.mem.Allocator) !config.LayoutList {
-    var layouts = config.LayoutList.init(allocator);
+pub fn mock(alloc: std.mem.Allocator) !types.LayoutList {
+    var layouts = types.LayoutList.init(alloc);
     try layouts.put("layout1", .{ .tag = 3, .applications = &.{
         .{ .class = "st" } } });
     try layouts.put("layout2", .{ .tag = 2, .applications = &.{
         .{ .class = "LibreWolf" } } });
     return layouts;
+}
+
+pub fn rules(alloc: std.mem.Allocator, layouts: types.LayoutList) ![]dwm.Rule {
+    var rules_list = types.RuleList.init(alloc);
+
+    for (layouts.values()) |layout| {
+        const layout_rules = try layout.rules(alloc);
+        try rules_list.appendSlice(layout_rules);
+    }
+    return try rules_list.toOwnedSlice();
 }
