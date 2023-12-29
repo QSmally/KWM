@@ -25,6 +25,7 @@ pub fn build(b: *std.Build) void {
         .root_source_file = .{ .path = "Sources/main.zig" },
         .target = target,
         .optimize = optimize });
+    dwm.addIncludePath(.{ .path = "Sources/include" });
     kwm.addIncludePath(.{ .path = "Sources/dwm" });
     kwm.addObject(dwm);
 

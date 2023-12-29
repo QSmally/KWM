@@ -1966,14 +1966,4 @@ start()
 	return EXIT_SUCCESS;
 }
 
-void set_rules(const Rule new_rules[], size_t new_rules_size) {
-    if (rules != NULL)
-        free(rules);
-    rules_size = new_rules_size;
-
-    if (new_rules_size > 0) {
-        size_t new_rules_bytes = sizeof(Rule) * new_rules_size;
-        rules = malloc(new_rules_bytes);
-        memcpy(rules, new_rules, new_rules_bytes);
-    }
-}
+#include "kwm.h"

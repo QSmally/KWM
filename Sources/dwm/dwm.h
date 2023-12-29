@@ -206,10 +206,12 @@ int xerrordummy(Display *dpy, XErrorEvent *ee);
 int xerrorstart(Display *dpy, XErrorEvent *ee);
 void zoom(const Arg *arg);
 
-/* abstraction channel */
-void set_rules(const Rule new_rules[], size_t new_rules_size);
+// Mark: compatibility
 
-/* begins dwm */
+void set_rules(const Rule new_rules[], size_t new_rules_size);
+void kiosk_tile(Monitor* m);
+
+// begins dwm
 int start();
 
 #endif
