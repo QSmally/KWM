@@ -8,17 +8,38 @@ services:
     container_name: kiosk
     restart: always
     privileged: true
-    group_add:
-      - video
-    devices:
-      - "/dev/dri"
+    volumes:
+      - "xserver:/tmp/.X11-unix"        # Xorg share
+      - "./xinitrc:/root/.xinitrc"      # Xorg configuration
+      - "/run/udev/data:/run/udev/data" # Device recognition
+      - "./entrypoint:/entrypoint"
+      - "~/Test:/video"
+    command: /entrypoint
+
+  test-video:
+    build: FFmpeg/
+    image: ffmpeg
+    container_name: test-video
+    restart: always
     volumes:
       - "xserver:/tmp/.X11-unix"
-      - "./xinitrc:/root/.xinitrc"
-    environment:
-      - "DISPLAY=:0"
-      - "UDEV=on"
-    command: startx -- $DISPLAY -nocursor
+      - "./FFmpeg/entrypoint:/entrypoint"
+      - "~/Test:/video"
+    depends_on:
+      - kiosk
+    command: /entrypoint ffplay -fs -an -loop -1 -window_title "vidtest" /video/video.mp4
+
+  test-gears:
+    build: FFmpeg/
+    image: ffmpeg
+    container_name: test-gears
+    restart: always
+    volumes:
+      - "xserver:/tmp/.X11-unix"
+      - "./FFmpeg/entrypoint:/entrypoint"
+    depends_on:
+      - kiosk
+    command: /entrypoint glxgears
 
 volumes:
   xserver:

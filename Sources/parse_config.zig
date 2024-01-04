@@ -12,10 +12,10 @@ const std = @import("std");
 
 pub fn mock(alloc: std.mem.Allocator) !types.LayoutList {
     var layouts = types.LayoutList.init(alloc);
-    try layouts.put("layout1", .{ .tag = 3, .applications = &.{
-        .{ .class = "st" } } });
+    try layouts.put("layout1", .{ .tag = 1, .applications = &.{
+        .{ .title = "glxgears" } } });
     try layouts.put("layout2", .{ .tag = 2, .applications = &.{
-        .{ .class = "LibreWolf" } } });
+        .{ .title = "vidtest" } } });
     return layouts;
 }
 

@@ -4,7 +4,6 @@ FROM debian:bookworm AS compiler
 ARG VERSION=0.11.0
 ARG OPTIONS=-Doptimize=ReleaseSafe
 
-# RUN apk update && apk add \
 RUN apt update && apt install -y \
     # Zig
     curl tar xz-utils \
@@ -33,7 +32,9 @@ RUN apt update && apt install -y \
     xserver-xorg-input-all \
     xserver-xorg-input-evdev \
     xserver-xorg-legacy \
-    xserver-xorg-video-all
+    xserver-xorg-video-all \
+    # debug
+    xterm htop vim
 COPY --from=compiler /build/zig-out/bin /bin
 VOLUME /tmp/.X11-unix
 VOLUME /root/.xinitrc
