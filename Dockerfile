@@ -36,5 +36,9 @@ RUN apt update && apt install -y \
     # debug
     xterm htop vim
 COPY --from=compiler /build/zig-out/bin /bin
+COPY Scripts/xinitrc /root/.xinitrc
+COPY Scripts/entrypoint /root/entrypoint
+
+ENV UDEV=on
+
 VOLUME /tmp/.X11-unix
-VOLUME /root/.xinitrc

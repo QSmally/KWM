@@ -1,0 +1,42 @@
+
+version: "2"
+
+services:
+  kiosk:
+    build: .
+    image: kiosk
+    container_name: kiosk
+    restart: always
+    privileged: true
+    volumes:
+      - "xserver:/tmp/.X11-unix" # Xorg share
+    devices:
+      - "/run/udev/data"
+      - "/dev/dri"
+    command: /usr/bin/entry.sh /root/entrypoint
+
+  test-video:
+    build: Tests/FFmpeg/
+    image: ffmpeg
+    container_name: test-video
+    restart: always
+    volumes:
+      - "xserver:/tmp/.X11-unix"
+    depends_on:
+      - kiosk
+    # use '-i <url>' for remote video, see 'man ffplay'
+    command: /entrypoint ffplay -fs -an -sn -noborder -loop -1 -window_title "vidtest" /sample.mp4
+
+  test-gears:
+    build: Tests/FFmpeg/
+    image: ffmpeg
+    container_name: test-gears
+    restart: always
+    volumes:
+      - "xserver:/tmp/.X11-unix"
+    depends_on:
+      - kiosk
+    command: /entrypoint glxgears
+
+volumes:
+  xserver:
