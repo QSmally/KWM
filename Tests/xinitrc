@@ -1,0 +1,6 @@
+#!/bin/sh
+
+glxgears &
+ffplay sample.mp4 -loop -1 -window_title "sample-video" &
+
+exec ExtendedWM/zig-out/bin/ExtendedWM

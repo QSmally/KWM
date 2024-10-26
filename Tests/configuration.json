@@ -1,0 +1,12 @@
+{
+    "default": [
+        {
+            "titles": "sample-video",
+            "coordinates": [0, 0, 720, 405]
+        },
+        {
+            "titles": "glx gears glxgears glx-gears",
+            "coordinates": [0, 405, 720, 875]
+        }
+    ]
+}
