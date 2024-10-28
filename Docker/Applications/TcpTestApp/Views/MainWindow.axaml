@@ -1,0 +1,55 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:vm="using:TcpTestApp.ViewModels"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+        x:Class="TcpTestApp.Views.MainWindow"
+        x:DataType="vm:MainWindowViewModel"
+        Icon="/Assets/avalonia-logo.ico"
+        Title="TcpTestApp">
+
+    <Design.DataContext>
+        <!-- This only sets the DataContext for the previewer in an IDE,
+             to set the actual DataContext for runtime, set the DataContext property in code (look at App.axaml.cs) -->
+        <vm:MainWindowViewModel/>
+    </Design.DataContext>
+
+       <StackPanel>
+         
+           <Grid Height="20"></Grid>
+           
+           <Grid ColumnDefinitions="200, 100, 200">
+               <Button Grid.Column="0" Click="Button_Start" Content="Test Server Start"/>
+               <Button Grid.Column="2" Click="Button_Stop" Content="Test Server Stop"/>
+           </Grid>
+           
+           <Grid Height="20"></Grid>
+           
+           <Grid ColumnDefinitions="200, 100, 200">
+               <TextBox Grid.Column="0"  Watermark="ServerName" Text="{Binding ServerName.Value}"/>
+               <TextBox Grid.Column="2"  Watermark="ServerPort" Text="{Binding  ServerPort.Value}"></TextBox>
+           </Grid>
+           
+           <Grid Height="20"></Grid>
+           
+           <Grid ColumnDefinitions="200, 100, 200">
+                <TextBox Grid.Column="0" Watermark="Layout1" Text="{Binding  Layout1.Value}"></TextBox>
+                <Button Grid.Column="2" Click="Button_Layout1" Content="{Binding Layout1.Value}"/>
+           </Grid>
+           
+           <Grid ColumnDefinitions="200, 100, 200">
+                <TextBox Grid.Column="0" Watermark="Layout2" Text="{Binding  Layout2.Value}"></TextBox>
+                <Button Grid.Column="2" Click="Button_Layout2" Content="{Binding Layout2.Value}"/>
+           </Grid>
+           
+           <Grid ColumnDefinitions="200, 100, 200">
+               <TextBox Grid.Column="0" Watermark="Layout3" Text="{Binding  Layout3.Value}"></TextBox>
+               <Button Grid.Column="2" Click="Button_Layout3" Content="{Binding Layout3.Value}"/>
+           </Grid>
+           
+           <Grid Height="100"></Grid>
+           <SelectableTextBlock Foreground="Red" Text="{Binding ErrorMessage.Value}" />
+       </StackPanel>
+
+    </Window>

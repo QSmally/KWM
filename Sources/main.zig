@@ -18,8 +18,8 @@ pub fn main() void {
         wm.die("couldn't parse configuration.json layout: {}", .{ err });
     if (!layouts.contains(Layout.default))
         wm.die("layout configuration must at least contain '{s}' layout", .{ Layout.default });
-    layouts.lockPointers();
-    wm.tell("loaded {} layouts", .{ layouts.count() });
+    layouts.lockPointers(); // prevent accidentally invalidating keys
+    wm.debug("loaded layouts: {}", .{ layouts.count() });
 
     // null defaults to $DISPLAY
     const display = X11.XOpenDisplay(null);

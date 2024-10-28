@@ -1,6 +1,36 @@
 #!/bin/bash
 
+xrandr --orientation ${DISPLAY_ROTATION:-normal}
 xhost +local:root
 xset s off -dpms
+
+if [ ! -z "$DISPLAY_ROTATION" ]; then
+    COORDS="1 0 0 0 1 0 0 0 1"
+
+    case $DISPLAY_ROTATION in
+        "right")    COORDS="0 1 0 -1 0 1 0 0 1" ;;
+        "inverted") COORDS="-1 0 1 0 -1 1 0 0 1" ;;
+        "left")     COORDS="0 -1 1 1 0 0 0 0 1" ;;
+    esac
+
+    cat <<EOF > /etc/X11/xorg.conf.d/49-touch-rotate.conf
+Section "InputClass"
+    Identifier "evdev touchscreen catchall"
+    MatchDevicePath "/dev/input/event*"
+    Option "TransformationMatrix" "$COORDS"
+    Driver "evdev"
+EndSection
+EOF
+
+    ids=$(xinput --list | awk -v search="pointer" \
+'$0 ~ search {match($0, /id=[0-9]+/);\
+if (RSTART) \
+  print substr($0, RSTART+3, RLENGTH-3)\
+}')
+
+    for i in $ids; do
+        xinput set-prop ${i} 'Coordinate Transformation Matrix' $COORDS
+    done
+fi
 
 exec /bin/ExtendedWM

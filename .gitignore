@@ -8,6 +8,10 @@
 Session.vim
 *.swp
 
+# TcpTestApp
+bin
+obj
+
 # Zig
 .zig-cache
 zig-out

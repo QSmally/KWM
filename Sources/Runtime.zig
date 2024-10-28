@@ -37,7 +37,7 @@ pub fn init(alloc: std.mem.Allocator, layouts: Layout.List, display: *X11.Displa
         .screen_width = screen_width,
         .screen_height = screen_height,
         .is_running = true,
-        .current_layout = "default",
+        .current_layout = Layout.default,
         .current_layout_lock = std.Thread.Mutex {},
         .managed_windows = null };
 }
@@ -96,24 +96,18 @@ pub fn unmanage_window(self: *Self, managed_window: *ManagedWindow) void {
 }
 
 pub fn layout_for(self: *Self, managed_window: *const ManagedWindow) ?Layout {
-    var layouts_ = self.layouts.iterator();
+    self.current_layout_lock.lock();
+    const layout = self.layouts.get(self.current_layout);
+    self.current_layout_lock.unlock();
 
-    while (layouts_.next()) |layout_| {
-        if (!self.is_current_layout(layout_.key_ptr.*))
-            continue;
-        for (layout_.value_ptr.*) |application_| {
-            if (managed_window.is_matching_rule(self, &application_))
-                return application_;
+    if (layout) |layout_| {
+        for (layout_) |application| {
+            if (managed_window.is_matching_rule(self, &application))
+                return application;
         }
     }
 
     return null;
-}
-
-pub fn is_current_layout(self: *Self, layout_name: []const u8) bool {
-    self.current_layout_lock.lock();
-    defer self.current_layout_lock.unlock();
-    return std.mem.eql(u8, self.current_layout, layout_name);
 }
 
 pub fn layout_select(self: *Self, layout: []const u8) !void {

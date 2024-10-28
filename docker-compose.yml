@@ -10,6 +10,10 @@ services:
     privileged: true
     volumes:
       - "xserver:/tmp/.X11-unix" # Xorg share
+    environment:
+      - "DEBUG_ENABLED=1"
+      - "CURSOR_ENABLED=0"
+      - "DISPLAY_ROTATION=right"
     command: /entrypoint
 
   ffmpeg-video:
@@ -33,6 +37,17 @@ services:
     depends_on:
       - extendedwm
     command: /entrypoint glxgears
+
+  test-app:
+    build: Docker/Applications/
+    image: test-applications
+    container_name: tcptestapp
+    restart: always
+    volumes:
+      - "xserver:/tmp/.X11-unix"
+    depends_on:
+      - extendedwm
+    command: /entrypoint /App/TcpTestApp
 
 volumes:
   xserver:

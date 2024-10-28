@@ -19,5 +19,8 @@ DISPLAY_NR=$(echo "$DISPLAY" | sed "s/://")
 LOCKFILE="/tmp/.X${DISPLAY_NR}-lock"
 [ -f "$LOCKFILE" ] && rm -f "$LOCKFILE"
 
-# startx -- $DISPLAY -nocursor
-startx -- $DISPLAY
+if [ "$CURSOR_ENABLED" = "1" ]; then
+    startx -- $DISPLAY
+else
+    startx -- $DISPLAY -nocursor
+fi
