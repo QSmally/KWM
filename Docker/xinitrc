@@ -1,0 +1,6 @@
+#!/bin/bash
+
+xhost +local:root
+xset s off -dpms
+
+exec /bin/ExtendedWM

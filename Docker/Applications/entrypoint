@@ -1,0 +1,11 @@
+#!/bin/bash
+
+export DISPLAY=:0
+
+sleep 3
+
+while [ ! -e /tmp/.X11-unix/X${DISPLAY#*:} ]; do
+    sleep 0.5
+done
+
+eval $(printf "%q " "$@")

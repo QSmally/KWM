@@ -1,0 +1,12 @@
+{
+    "default": [
+        {
+            "titles": "ffmpeg video",
+            "coordinates": [0, 0, 500, 300]
+        },
+        {
+            "titles": "glxgears glx-gears",
+            "coordinates": [0, 300, 500, 300]
+        }
+    ]
+}

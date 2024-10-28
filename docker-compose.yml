@@ -1,0 +1,38 @@
+
+version: "2.4"
+
+services:
+  extendedwm:
+    build: .
+    image: extendedwm
+    container_name: extendedwm
+    restart: always
+    privileged: true
+    volumes:
+      - "xserver:/tmp/.X11-unix" # Xorg share
+    command: /entrypoint
+
+  ffmpeg-video:
+    build: Docker/Applications/
+    image: test-applications
+    container_name: ffmpeg-video
+    restart: always
+    volumes:
+      - "xserver:/tmp/.X11-unix"
+    depends_on:
+      - extendedwm
+    command: /entrypoint ffplay -loop -1 -window_title "ffmpeg video" /sample.mp4
+
+  glxgears:
+    build: Docker/Applications/
+    image: test-applications
+    container_name: glxgears
+    restart: always
+    volumes:
+      - "xserver:/tmp/.X11-unix"
+    depends_on:
+      - extendedwm
+    command: /entrypoint glxgears
+
+volumes:
+  xserver:
