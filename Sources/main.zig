@@ -1,15 +1,11 @@
 
-const X11 = @cImport({
-    @cInclude("X11/Xlib.h");
-    @cInclude("X11/X.h");
-    @cInclude("X11/Xutil.h");
-    @cInclude("X11/Xatom.h");
-    @cInclude("X11/cursorfont.h"); });
 const std = @import("std");
 
 const Layout = @import("./Layout.zig");
 const Runtime = @import("./Runtime.zig");
+const X11 = @import("./x11.zig");
 const runloop = @import("./runloop.zig");
+const tcp = @import("./tcp.zig");
 const wm = @import("./wm.zig");
 
 pub fn main() void {
@@ -18,10 +14,12 @@ pub fn main() void {
     defer process_lifetime.deinit();
 
     // layout configuration
-    const layouts = Layout.from_file(process_lifetime.allocator(), "configuration.json") catch |err|
-        wm.die("couldn't parse layout configuration: {}", .{ err });
+    var layouts = Layout.from_file(process_lifetime.allocator(), "configuration.json") catch |err|
+        wm.die("couldn't parse configuration.json layout: {}", .{ err });
     if (!layouts.contains(Layout.default))
         wm.die("layout configuration must at least contain '{s}' layout", .{ Layout.default });
+    layouts.lockPointers();
+    wm.tell("loaded {} layouts", .{ layouts.count() });
 
     // null defaults to $DISPLAY
     const display = X11.XOpenDisplay(null);
@@ -30,6 +28,12 @@ pub fn main() void {
     if (display) |display_| {
         var runtime = Runtime.init(process_lifetime.allocator(), layouts, display_);
         defer runtime.deinit();
+
+        var tcp_thread = std.Thread.spawn(.{}, tcp.thread, .{ &runtime }) catch |err|
+            wm.die("couldn't spawn TCP thread: {}", .{ err });
+        defer tcp_thread.join();
+
+        wm.debug("screen resolution: {}x{}", .{ runtime.screen_width, runtime.screen_height });
         return runloop.runloop(&runtime);
     }
 

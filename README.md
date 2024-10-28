@@ -1,9 +1,7 @@
 
 # Extended Window Manager
 
-A managed window manager by a TCP stream\* for kiosks and embedded applications.
-
-\*: not yet implemented
+A managed window manager by a TCP stream for kiosks and embedded applications.
 
 ## Description
 
@@ -57,6 +55,15 @@ flexible layout must be created where an application can appear and disappear, u
 a fallback clause.
 
 <!-- recursive fallback must be implemented ! e.g. idle -> default -> fallback -->
+
+### TCP API
+
+ExtendedWM opens a TCP server on port `1025`. Currently, only a single connection can be handled a
+time. An application can send a JSON message to ExtendedWM to change its current layout:
+
+```json
+{ "layout_select": "idle" }
+```
 
 ## Development
 

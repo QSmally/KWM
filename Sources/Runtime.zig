@@ -1,14 +1,9 @@
 
-const X11 = @cImport({
-    @cInclude("X11/Xlib.h");
-    @cInclude("X11/X.h");
-    @cInclude("X11/Xutil.h");
-    @cInclude("X11/Xatom.h");
-    @cInclude("X11/cursorfont.h"); });
 const std = @import("std");
 
 const Layout = @import("./Layout.zig");
 const ManagedWindow = @import("./ManagedWindow.zig");
+const X11 = @import("./x11.zig");
 
 const Self = @This();
 
@@ -19,6 +14,7 @@ screen_width: c_int,
 screen_height: c_int,
 is_running: bool,
 current_layout: []const u8,
+current_layout_lock: std.Thread.Mutex,
 managed_windows: ?*ManagedWindow,
 
 pub fn init(alloc: std.mem.Allocator, layouts: Layout.List, display: *X11.Display) Self {
@@ -41,7 +37,8 @@ pub fn init(alloc: std.mem.Allocator, layouts: Layout.List, display: *X11.Displa
         .screen_width = screen_width,
         .screen_height = screen_height,
         .is_running = true,
-        .current_layout = "default", // could be an index from process lifetime list of layout names
+        .current_layout = "default",
+        .current_layout_lock = std.Thread.Mutex {},
         .managed_windows = null };
 }
 
@@ -98,19 +95,44 @@ pub fn unmanage_window(self: *Self, managed_window: *ManagedWindow) void {
     }
 }
 
-pub fn layout_for(self: *const Self, managed_window: *const ManagedWindow) ?Layout.Parent {
+pub fn layout_for(self: *Self, managed_window: *const ManagedWindow) ?Layout {
     var layouts_ = self.layouts.iterator();
 
     while (layouts_.next()) |layout_| {
+        if (!self.is_current_layout(layout_.key_ptr.*))
+            continue;
         for (layout_.value_ptr.*) |application_| {
             if (managed_window.is_matching_rule(self, &application_))
-                return .{
-                    .layout = layout_.key_ptr.*,
-                    .application = application_ };
+                return application_;
         }
     }
 
     return null;
+}
+
+pub fn is_current_layout(self: *Self, layout_name: []const u8) bool {
+    self.current_layout_lock.lock();
+    defer self.current_layout_lock.unlock();
+    return std.mem.eql(u8, self.current_layout, layout_name);
+}
+
+pub fn layout_select(self: *Self, layout: []const u8) !void {
+    const layout_names = self.layouts.keys();
+
+    for (layout_names) |layout_name| {
+        if (std.mem.eql(u8, layout, layout_name)) {
+            self.current_layout_lock.lock();
+            defer self.current_layout_lock.unlock();
+
+            // put current_layout pointer to list's key pointer, only
+            // invalidates if the list is ever changed. 'layout' is managed
+            // externally and may be invalid early
+            self.current_layout = layout_name;
+            return;
+        }
+    }
+
+    return error.layoutUnknown;
 }
 
 pub fn text_property_alloc(self: *const Self, atom: X11.Atom, window: X11.Window) ![]const u8 {
@@ -124,4 +146,21 @@ pub fn text_property_alloc(self: *const Self, atom: X11.Atom, window: X11.Window
 
     // copy, caller owns memory
     return self.allocator.dupe(u8, std.mem.span(property.value));
+}
+
+pub fn rerender(self: *Self) void {
+    var iterator = self.managed_windows;
+
+    while (iterator) |managed_window| {
+        // may be unsafe/inconsistent with checking current layout name if
+        // the layout is changed in the middle of rerendering
+        if (self.layout_for(managed_window)) |layout| {
+            managed_window.prepare(self.display, layout);
+            managed_window.show(self.display);
+        } else {
+            managed_window.hide(self.display);
+        }
+
+        iterator = managed_window.next;
+    }
 }

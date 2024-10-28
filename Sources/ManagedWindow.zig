@@ -1,14 +1,9 @@
 
-const X11 = @cImport({
-    @cInclude("X11/Xlib.h");
-    @cInclude("X11/X.h");
-    @cInclude("X11/Xutil.h");
-    @cInclude("X11/Xatom.h");
-    @cInclude("X11/cursorfont.h"); });
 const std = @import("std");
 
 const Layout = @import("./Layout.zig");
 const Runtime = @import("./Runtime.zig");
+const X11 = @import("./x11.zig");
 const wm = @import("./wm.zig");
 
 const Self = @This();
@@ -42,4 +37,22 @@ pub fn is_matching_rule(self: *const Self, runtime: *const Runtime, layout: *con
     if (layout.titles) |titles|
         return std.mem.indexOf(u8, titles, window_name) != null;
     return false;
+}
+
+pub fn prepare(self: *const Self, display: *X11.Display, layout: Layout) void {
+    _ = X11.XMoveResizeWindow(
+        display,
+        self.x11_window,
+        @intCast(layout.coordinates[0]),
+        @intCast(layout.coordinates[1]),
+        layout.coordinates[2],
+        layout.coordinates[3]);
+}
+
+pub fn show(self: *const Self, display: *X11.Display) void {
+    _ = X11.XMapWindow(display, self.x11_window);
+}
+
+pub fn hide(self: *const Self, display: *X11.Display) void {
+    _ = X11.XUnmapWindow(display, self.x11_window);
 }

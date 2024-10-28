@@ -8,5 +8,11 @@
             "titles": "glx gears glxgears glx-gears",
             "coordinates": [0, 405, 720, 875]
         }
+    ],
+    "alternative": [
+        {
+            "titles": "glx gears glxgears glx-gears",
+            "coordinates": [0, 0, 720, 400]
+        }
     ]
 }

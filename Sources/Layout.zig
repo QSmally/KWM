@@ -4,13 +4,8 @@ const std = @import("std");
 const Self = @This();
 
 pub const Parent = struct {
-
     layout: []const u8,
     application: Self,
-
-    pub fn is_same_layout(self: *const Parent, current: []const u8) bool {
-        return std.mem.eql(u8, self.layout, current);
-    }
 };
 
 const ParseList = std.json.ArrayHashMap([]Self);

@@ -1,14 +1,9 @@
 
-const X11 = @cImport({
-    @cInclude("X11/Xlib.h");
-    @cInclude("X11/X.h");
-    @cInclude("X11/Xutil.h");
-    @cInclude("X11/Xatom.h");
-    @cInclude("X11/cursorfont.h"); });
 const std = @import("std");
 
 const Layout = @import("./Layout.zig");
 const Runtime = @import("./Runtime.zig");
+const X11 = @import("./x11.zig");
 const wm = @import("./wm.zig");
 
 pub fn runloop(runtime: *Runtime) void {
@@ -32,11 +27,8 @@ fn on_map_request(runtime: *Runtime, event: *X11.XMapRequestEvent) void {
     };
 
     if (runtime.layout_for(managed_window)) |layout| {
-        const coordinates = layout.application.coordinates;
-        _ = X11.XMoveResizeWindow(runtime.display, managed_window.x11_window, @intCast(coordinates[0]), @intCast(coordinates[1]), coordinates[2], coordinates[3]);
-
-        if (layout.is_same_layout(runtime.current_layout))
-            _ = X11.XMapWindow(runtime.display, managed_window.x11_window);
+        managed_window.prepare(runtime.display, layout);
+        managed_window.show(runtime.display);
     }
 }
 
