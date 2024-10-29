@@ -33,13 +33,15 @@ RUN apt update && apt install -y \
     xserver-xorg-input-evdev \
     xserver-xorg-legacy \
     xserver-xorg-video-all \
+    feh \
     # debug
     xterm htop vim
 COPY --from=compiler /build/zig-out/bin /bin
-COPY Docker/xinitrc /root/.xinitrc
+COPY Docker/Raspberry-Pi-5/99-vc4.conf /99-vc4.conf
 COPY Docker/configuration.json /configuration.json
 COPY Docker/entrypoint /entrypoint
-COPY Docker/Raspberry-Pi-5/99-vc4.conf /99-vc4.conf
+COPY Docker/extendas-name-logo-vector.svg /extendas-name-logo-vector.svg
+COPY Docker/xinitrc /root/.xinitrc
 
 VOLUME /tmp/.X11-unix
 

@@ -33,4 +33,9 @@ if (RSTART) \
     done
 fi
 
+feh \
+    --no-fehbg \
+    --image-bg white \
+    --bg-center /extendas-name-logo-vector.svg &
+
 exec /bin/ExtendedWM
