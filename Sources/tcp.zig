@@ -41,16 +41,13 @@ pub fn thread(runtime: *Runtime) void {
 }
 
 fn on_connection(alloc: std.mem.Allocator, runtime: *Runtime, connection: *std.net.Server.Connection) !void {
-    while (try connection.stream
+    if (try connection.stream
         .reader()
         .readUntilDelimiterOrEofAlloc(alloc, '\n', maxBufferLen)
     ) |message| {
         wm.debug("{}: >>> {s}", .{ connection.address, message });
 
-        const poke = std.json.parseFromSliceLeaky(Poke, alloc, message, .{}) catch |err| {
-            wm.tell("{}: encountered {} whilst parsing: {s}", .{ connection.address, err, message });
-            continue;
-        };
+        const poke = try std.json.parseFromSliceLeaky(Poke, alloc, message, .{});
 
         // select new layout
         if (poke.layout_select) |layout| {
@@ -59,7 +56,7 @@ fn on_connection(alloc: std.mem.Allocator, runtime: *Runtime, connection: *std.n
 
             // rerender twice for good measure
             runtime.rerender();
-            return runtime.rerender();
+            runtime.rerender();
         }
     }
 }

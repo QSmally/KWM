@@ -16,6 +16,7 @@ is_running: bool,
 current_layout: []const u8,
 current_layout_lock: std.Thread.Mutex,
 managed_windows: ?*ManagedWindow,
+managed_windows_lock: std.Thread.Mutex,
 
 pub fn init(alloc: std.mem.Allocator, layouts: Layout.List, display: *X11.Display) Self {
     const default_screen = X11.XDefaultScreen(display);
@@ -23,7 +24,8 @@ pub fn init(alloc: std.mem.Allocator, layouts: Layout.List, display: *X11.Displa
     const screen_height = X11.XDisplayHeight(display, default_screen);
 
     const root_window = X11.DefaultRootWindow(display);
-    _ = X11.XSelectInput(display, root_window, X11.SubstructureRedirectMask | X11.SubstructureNotifyMask);
+    _ = X11.XSelectInput(display, root_window, X11.SubstructureRedirectMask | X11.SubstructureNotifyMask | X11.ButtonPressMask);
+    _ = X11.XGrabButton(display, X11.Button1, X11.False, root_window, X11.False, X11.ButtonPressMask, X11.GrabModeSync, X11.GrabModeAsync, X11.None, X11.None);
     _ = X11.XSync(display, X11.False);
 
     const cursor = X11.XCreateFontCursor(display, X11.XC_left_ptr);
@@ -39,7 +41,8 @@ pub fn init(alloc: std.mem.Allocator, layouts: Layout.List, display: *X11.Displa
         .is_running = true,
         .current_layout = Layout.default,
         .current_layout_lock = std.Thread.Mutex {},
-        .managed_windows = null };
+        .managed_windows = null,
+        .managed_windows_lock = std.Thread.Mutex {} };
 }
 
 pub fn deinit(self: *Self) void {
@@ -52,6 +55,20 @@ pub fn quit(self: *Self) void {
     self.is_running = false;
 }
 
+pub fn managed_window_len(self: *Self) u32 {
+    self.managed_windows_lock.lock();
+    defer self.managed_windows_lock.unlock();
+    var len: u32 = 0;
+    var iterator = self.managed_windows;
+
+    while (iterator) |iterator_| {
+        len += 1;
+        iterator = iterator_.next;
+    }
+
+    return len;
+}
+
 pub fn managed_window_from(self: *Self, window: X11.Window) !*ManagedWindow {
     if (self.managed_window_find(window)) |managed_window|
         return managed_window;
@@ -59,13 +76,18 @@ pub fn managed_window_from(self: *Self, window: X11.Window) !*ManagedWindow {
     // create
     var new_managed_window = try self.allocator.create(ManagedWindow);
     new_managed_window.* = ManagedWindow.init(self.allocator, window);
-    new_managed_window.next = self.managed_windows;
 
+    // prepend
+    self.managed_windows_lock.lock();
+    defer self.managed_windows_lock.unlock();
+    new_managed_window.next = self.managed_windows;
     self.managed_windows = new_managed_window;
     return new_managed_window;
 }
 
-pub fn managed_window_find(self: *const Self, window: X11.Window) ?*ManagedWindow {
+pub fn managed_window_find(self: *Self, window: X11.Window) ?*ManagedWindow {
+    self.managed_windows_lock.lock();
+    defer self.managed_windows_lock.unlock();
     var iterator = self.managed_windows;
 
     while (iterator) |iterator_| {
@@ -78,6 +100,9 @@ pub fn managed_window_find(self: *const Self, window: X11.Window) ?*ManagedWindo
 }
 
 pub fn unmanage_window(self: *Self, managed_window: *ManagedWindow) void {
+    self.managed_windows_lock.lock();
+    defer self.managed_windows_lock.unlock();
+
     // also deallocates self
     defer managed_window.deinit();
 
@@ -143,11 +168,12 @@ pub fn text_property_alloc(self: *const Self, atom: X11.Atom, window: X11.Window
 }
 
 pub fn rerender(self: *Self) void {
+    // cannot be called when current_layout_lock is locked
+    self.managed_windows_lock.lock();
+    defer self.managed_windows_lock.unlock();
     var iterator = self.managed_windows;
 
     while (iterator) |managed_window| {
-        // may be unsafe/inconsistent with checking current layout name if
-        // the layout is changed in the middle of rerendering
         if (self.layout_for(managed_window)) |layout| {
             managed_window.prepare(self.display, layout);
             managed_window.show(self.display);

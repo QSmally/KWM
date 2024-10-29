@@ -47,7 +47,8 @@
                 0,
                 600,
                 1024
-            ]
+            ],
+            "touch_jump_to": "default"
         }
     ]
 }

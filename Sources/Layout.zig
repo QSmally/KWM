@@ -13,11 +13,9 @@ pub const List = std.StringArrayHashMapUnmanaged([]Self);
 pub const default = "default";
 
 titles: ?[]const u8 = null,
-classes: ?[]const u8 = null, // not implemented
-instances: ?[]const u8 = null, // not implemented
 coordinates: [4]c_uint = .{ 0, 0, 400, 250 },
 disable_touch: bool = false, // not implemented
-touch_jump_to: ?[]const u8 = null, // not implemented
+touch_jump_to: ?[]const u8 = null,
 fallback_to: ?[]const u8 = null, // not implemented
 image_path: ?[]const u8 = null, // not implemented
 

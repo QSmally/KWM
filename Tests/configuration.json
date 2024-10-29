@@ -6,13 +6,15 @@
         },
         {
             "titles": "glx gears glxgears glx-gears",
-            "coordinates": [0, 405, 720, 875]
+            "coordinates": [0, 405, 720, 875],
+            "touch_jump_to": "alternative"
         }
     ],
     "alternative": [
         {
             "titles": "glx gears glxgears glx-gears",
-            "coordinates": [0, 0, 720, 400]
+            "coordinates": [0, 0, 720, 400],
+            "touch_jump_to": "default"
         }
     ]
 }
