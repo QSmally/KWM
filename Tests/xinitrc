@@ -3,4 +3,9 @@
 glxgears &
 ffplay sample.mp4 -loop -1 -window_title "sample-video" &
 
+feh \
+    --no-fehbg \
+    --image-bg black \
+    --bg-scale ~/kermit.jpg
+
 exec ../zig-out/bin/ExtendedWM

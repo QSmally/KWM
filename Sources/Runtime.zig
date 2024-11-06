@@ -5,7 +5,12 @@ const Layout = @import("./Layout.zig");
 const ManagedWindow = @import("./ManagedWindow.zig");
 const X11 = @import("./x11.zig");
 
-const Self = @This();
+const Runtime = @This();
+
+const eventMask = X11.SubstructureRedirectMask |
+    X11.SubstructureNotifyMask |
+    X11.ButtonPressMask;
+pub const maxRecursion = 16;
 
 allocator: std.mem.Allocator,
 layouts: Layout.List,
@@ -18,14 +23,24 @@ current_layout_lock: std.Thread.Mutex,
 managed_windows: ?*ManagedWindow,
 managed_windows_lock: std.Thread.Mutex,
 
-pub fn init(alloc: std.mem.Allocator, layouts: Layout.List, display: *X11.Display) Self {
+pub fn init(alloc: std.mem.Allocator, layouts: Layout.List, display: *X11.Display) Runtime {
     const default_screen = X11.XDefaultScreen(display);
     const screen_width = X11.XDisplayWidth(display, default_screen);
     const screen_height = X11.XDisplayHeight(display, default_screen);
 
     const root_window = X11.DefaultRootWindow(display);
-    _ = X11.XSelectInput(display, root_window, X11.SubstructureRedirectMask | X11.SubstructureNotifyMask | X11.ButtonPressMask);
-    _ = X11.XGrabButton(display, X11.Button1, X11.False, root_window, X11.False, X11.ButtonPressMask, X11.GrabModeSync, X11.GrabModeAsync, X11.None, X11.None);
+    _ = X11.XSelectInput(display, root_window, eventMask);
+    _ = X11.XGrabButton(
+        display,
+        X11.Button1,
+        X11.False,
+        root_window,
+        X11.False,
+        X11.ButtonPressMask,
+        X11.GrabModeSync,
+        X11.GrabModeAsync,
+        X11.None,
+        X11.None);
     _ = X11.XSync(display, X11.False);
 
     const cursor = X11.XCreateFontCursor(display, X11.XC_left_ptr);
@@ -45,17 +60,17 @@ pub fn init(alloc: std.mem.Allocator, layouts: Layout.List, display: *X11.Displa
         .managed_windows_lock = std.Thread.Mutex {} };
 }
 
-pub fn deinit(self: *Self) void {
+pub fn deinit(self: *Runtime) void {
     while (self.managed_windows) |managed_window|
         self.unmanage_window(managed_window); // mutates self.managed_windows
     _ = X11.XCloseDisplay(self.display);
 }
 
-pub fn quit(self: *Self) void {
+pub fn quit(self: *Runtime) void {
     self.is_running = false;
 }
 
-pub fn managed_window_len(self: *Self) u32 {
+pub fn managed_window_len(self: *Runtime) u32 {
     self.managed_windows_lock.lock();
     defer self.managed_windows_lock.unlock();
     var len: u32 = 0;
@@ -69,13 +84,13 @@ pub fn managed_window_len(self: *Self) u32 {
     return len;
 }
 
-pub fn managed_window_from(self: *Self, window: X11.Window) !*ManagedWindow {
+pub fn managed_window_from(self: *Runtime, window: X11.Window) !*ManagedWindow {
     if (self.managed_window_find(window)) |managed_window|
         return managed_window;
 
     // create
     var new_managed_window = try self.allocator.create(ManagedWindow);
-    new_managed_window.* = ManagedWindow.init(self.allocator, window);
+    new_managed_window.* = ManagedWindow.init(self.allocator, self.display, window);
 
     // prepend
     self.managed_windows_lock.lock();
@@ -85,7 +100,7 @@ pub fn managed_window_from(self: *Self, window: X11.Window) !*ManagedWindow {
     return new_managed_window;
 }
 
-pub fn managed_window_find(self: *Self, window: X11.Window) ?*ManagedWindow {
+pub fn managed_window_find(self: *Runtime, window: X11.Window) ?*ManagedWindow {
     self.managed_windows_lock.lock();
     defer self.managed_windows_lock.unlock();
     var iterator = self.managed_windows;
@@ -99,7 +114,7 @@ pub fn managed_window_find(self: *Self, window: X11.Window) ?*ManagedWindow {
     return null;
 }
 
-pub fn unmanage_window(self: *Self, managed_window: *ManagedWindow) void {
+pub fn unmanage_window(self: *Runtime, managed_window: *ManagedWindow) void {
     self.managed_windows_lock.lock();
     defer self.managed_windows_lock.unlock();
 
@@ -120,14 +135,47 @@ pub fn unmanage_window(self: *Self, managed_window: *ManagedWindow) void {
     }
 }
 
-pub fn layout_for(self: *Self, managed_window: *const ManagedWindow) ?Layout {
+pub fn current_layout_copy(self: *Runtime) []const u8 {
     self.current_layout_lock.lock();
-    const layout = self.layouts.get(self.current_layout);
+    const copy = self.current_layout;
     self.current_layout_lock.unlock();
+    return copy;
+}
 
-    if (layout) |layout_| {
-        for (layout_) |application| {
-            if (managed_window.is_matching_rule(self, &application))
+pub fn effective_layout(self: *Runtime, layout: []const u8, max_recursion: u16) []const u8 {
+    if (max_recursion == 0)
+        return layout;
+    const layouts = self.layouts.get(layout);
+
+    if (layouts) |layouts_| {
+        layout_loop: for (layouts_) |application| {
+            if (application.fallback_to) |fallback| {
+                self.managed_windows_lock.lock();
+                defer self.managed_windows_lock.unlock();
+                var iterator = self.managed_windows;
+
+                // at least one window must conform to this layout
+                while (iterator) |managed_window| {
+                    if (managed_window.is_matching_rule(&application))
+                        continue :layout_loop;
+                    iterator = managed_window.next;
+                }
+
+                // else a recursive call is done to fallback
+                return self.effective_layout(fallback, max_recursion - 1);
+            }
+        }
+    }
+
+    return layout;
+}
+
+pub fn layout_for(self: *Runtime, layout: []const u8, managed_window: *const ManagedWindow) ?Layout {
+    const layouts = self.layouts.get(layout);
+
+    if (layouts) |layouts_| {
+        for (layouts_) |application| {
+            if (managed_window.is_matching_rule(&application))
                 return application;
         }
     }
@@ -135,7 +183,7 @@ pub fn layout_for(self: *Self, managed_window: *const ManagedWindow) ?Layout {
     return null;
 }
 
-pub fn layout_select(self: *Self, layout: []const u8) !void {
+pub fn layout_select(self: *Runtime, layout: []const u8) !void {
     const layout_names = self.layouts.keys();
 
     for (layout_names) |layout_name| {
@@ -154,31 +202,21 @@ pub fn layout_select(self: *Self, layout: []const u8) !void {
     return error.layoutUnknown;
 }
 
-pub fn text_property_alloc(self: *const Self, atom: X11.Atom, window: X11.Window) ![]const u8 {
-    var property: X11.XTextProperty = undefined;
+pub fn rerender(self: *Runtime) void {
+    const current_layout_ = self.current_layout_copy();
+    const effective_layout_ = self.effective_layout(current_layout_, Runtime.maxRecursion);
 
-    if (X11.XGetTextProperty(self.display, window, &property, atom) < X11.Success)
-        return error.badAtomOrWindow;
-    if (property.value == null)
-        return error.nullWindowName;
-    defer _ = X11.XFree(property.value);
-
-    // copy, caller owns memory
-    return self.allocator.dupe(u8, std.mem.span(property.value));
-}
-
-pub fn rerender(self: *Self) void {
     // cannot be called when current_layout_lock is locked
     self.managed_windows_lock.lock();
     defer self.managed_windows_lock.unlock();
     var iterator = self.managed_windows;
 
     while (iterator) |managed_window| {
-        if (self.layout_for(managed_window)) |layout| {
-            managed_window.prepare(self.display, layout);
-            managed_window.show(self.display);
+        if (self.layout_for(effective_layout_, managed_window)) |layout| {
+            managed_window.prepare(layout);
+            managed_window.show();
         } else {
-            managed_window.hide(self.display);
+            managed_window.hide();
         }
 
         iterator = managed_window.next;

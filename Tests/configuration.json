@@ -2,19 +2,23 @@
     "default": [
         {
             "titles": "sample-video",
-            "coordinates": [0, 0, 720, 405]
+            "coordinates": [0, 0, 720, 405],
+            "disable_touch": true,
+            "fallback_to": "fallback"
         },
         {
-            "titles": "glx gears glxgears glx-gears",
+            "titles": "glxgears glx-gears",
             "coordinates": [0, 405, 720, 875],
+            "disable_touch": true,
             "touch_jump_to": "alternative"
         }
     ],
     "alternative": [
         {
-            "titles": "glx gears glxgears glx-gears",
+            "titles": "glxgears glx-gears",
             "coordinates": [0, 0, 720, 400],
             "touch_jump_to": "default"
         }
-    ]
+    ],
+    "fallback": []
 }
