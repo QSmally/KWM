@@ -45,8 +45,12 @@ fn on_map_request(runtime: *Runtime, event: *X11.XMapRequestEvent) void {
 }
 
 fn on_destroy_notify(runtime: *Runtime, event: *X11.XDestroyWindowEvent) void {
-    if (runtime.managed_window_find(event.window)) |managed_window|
+    if (runtime.managed_window_find(event.window)) |managed_window| {
         runtime.unmanage_window(managed_window);
+        runtime.rerender();
+        runtime.rerender();
+    }
+
     wm.debug("window quit. managed windows={}", .{ runtime.managed_window_len() });
 }
 
