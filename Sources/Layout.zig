@@ -9,7 +9,6 @@ pub const default = "default";
 
 titles: ?[]const u8 = null,
 coordinates: [4]c_uint = .{ 0, 0, 400, 250 },
-disable_touch: bool = false,
 touch_jump_to: ?[]const u8 = null,
 fallback_to: ?[]const u8 = null,
 

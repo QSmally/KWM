@@ -1,7 +1,7 @@
 #!/bin/sh
 
-glxgears &
-ffplay sample.mp4 -loop -1 -window_title "sample-video" &
+glxgears > /dev/null &
+ffplay sample.mp4 -loop -1 -window_title "sample-video" 2> /dev/null &
 
 feh \
     --no-fehbg \

@@ -38,4 +38,13 @@ feh \
     --image-bg white \
     --bg-center /extendas-name-logo-vector.svg &
 
-exec /bin/ExtendedWM
+DISPLAY_RESOLUTION=$(xrandr | grep ' connected' | cut -d' ' -f4 | head -n 1)
+
+if [ -f "/Layouts/$DISPLAY_RESOLUTION.json" ]; then
+    echo "ExtendedWM start: load $DISPLAY_RESOLUTION.json"
+    exec /bin/ExtendedWM "/Layouts/$DISPLAY_RESOLUTION.json"
+else
+    echo "ExtendedWM start: $DISPLAY_RESOLUTION layout not found! wm won't show anything"
+    echo "{ \"default\": [] }" > /configuration.json
+    exec /bin/ExtendedWM
+fi

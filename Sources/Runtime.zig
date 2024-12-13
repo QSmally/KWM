@@ -212,13 +212,15 @@ pub fn rerender(self: *Runtime) void {
     var iterator = self.managed_windows;
 
     while (iterator) |managed_window| {
-        if (self.layout_for(effective_layout_, managed_window)) |layout| {
-            managed_window.prepare(layout);
-            managed_window.show();
-        } else {
-            managed_window.hide();
-        }
+        managed_window.hide();
+        iterator = managed_window.next;
+    }
 
+    iterator = self.managed_windows;
+
+    while (iterator) |managed_window| {
+        if (self.layout_for(effective_layout_, managed_window)) |layout|
+            managed_window.prepare(layout);
         iterator = managed_window.next;
     }
 }

@@ -1,0 +1,56 @@
+{
+    "default": [
+        {
+            "titles": "ffmpeg video",
+            "coordinates": [
+                0,
+                0,
+                600,
+                338
+            ]
+        },
+        {
+            "titles": "TcpTestApp Test",
+            "coordinates": [
+                0,
+                338,
+                600,
+                686
+            ],
+            "fallback_to": "fallback"
+        }
+    ],
+    "advertisements": [
+        {
+            "titles": "glxgears glx-gears",
+            "coordinates": [
+                0,
+                0,
+                600,
+                600
+            ]
+        },
+        {
+            "titles": "TcpTestApp Test",
+            "coordinates": [
+                0,
+                600,
+                600,
+                424
+            ],
+            "fallback_to": "fallback"
+        }
+    ],
+    "fallback": [
+        {
+            "titles": "glxgears glx-gears",
+            "coordinates": [
+                0,
+                0,
+                600,
+                1024
+            ],
+            "touch_jump_to": "default"
+        }
+    ]
+}

@@ -53,9 +53,6 @@ fn on_connection(alloc: std.mem.Allocator, runtime: *Runtime, connection: *std.n
         if (poke.layout_select) |layout| {
             wm.tell("{}: layout_select '{s}'", .{ connection.address, layout });
             try runtime.layout_select(layout);
-
-            // rerender twice for good measure
-            runtime.rerender();
             runtime.rerender();
         }
     }

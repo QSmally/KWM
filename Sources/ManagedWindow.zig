@@ -54,8 +54,6 @@ pub fn text_property_alloc(self: *const ManagedWindow, atom: X11.Atom) ![]const 
     return self.allocator.dupe(u8, std.mem.span(property.value));
 }
 
-const eventMask = X11.EnterWindowMask;
-
 pub fn prepare(self: *const ManagedWindow, layout: Layout) void {
     _ = X11.XMoveResizeWindow(
         self.display,
@@ -64,10 +62,6 @@ pub fn prepare(self: *const ManagedWindow, layout: Layout) void {
         @intCast(layout.coordinates[1]),
         layout.coordinates[2],
         layout.coordinates[3]);
-    _ = X11.XSelectInput(self.display, self.x11_window, eventMask);
-}
-
-pub fn show(self: *const ManagedWindow) void {
     _ = X11.XMapWindow(self.display, self.x11_window);
 }
 

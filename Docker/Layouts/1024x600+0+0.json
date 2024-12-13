@@ -16,7 +16,8 @@
                 338,
                 600,
                 686
-            ]
+            ],
+            "fallback_to": "fallback"
         }
     ],
     "advertisements": [
@@ -36,7 +37,8 @@
                 600,
                 600,
                 424
-            ]
+            ],
+            "fallback_to": "fallback"
         }
     ],
     "fallback": [
