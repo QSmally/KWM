@@ -35,12 +35,7 @@ in the following way:
             "fallback_to": "default"
         }
     ],
-    "fallback": [
-        {
-            "image_path": "out-of-order.jpg",
-            "coordinates": [0, 0, 720, 1280]
-        }
-    ]
+    "fallback": []
 }
 ```
 
@@ -54,8 +49,6 @@ Currently, applications can only be mapped in an absolute configuration (x, y, w
 flexible layout must be created where an application can appear and disappear, use two layouts with
 a fallback clause.
 
-<!-- recursive fallback must be implemented ! e.g. idle -> default -> fallback -->
-
 ### TCP API
 
 ExtendedWM opens a TCP server on port `1025`. Currently, only a single connection can be handled a
@@ -63,6 +56,16 @@ time. An application can send a JSON message to ExtendedWM to change its current
 
 ```json
 { "layout_select": "idle" }
+```
+
+### Instantiating the wm
+
+In the `.xinitrc` script which gets called by running `startx` (or any X init process), exec the
+window manager with its layout configuration as argument.
+
+```sh
+exec /bin/ExtendedWM # uses ./configuration.json
+exec /bin/ExtendedWM /Layout/1080x1920.json # specific resolution layout
 ```
 
 ## Development
